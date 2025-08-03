@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Memory bounds checking to prevent processing extremely large images (max 100MP, max dimension 65k)
+- Comprehensive integration tests for image processing algorithms
+- Test coverage for edge strength measurement and visual regression
+- Shared `Operation` enum between library and CLI
+
+### Changed
+- `Image::from_rgb()` and `Image::from_dynamic()` now return `Result<Image>` for safety
+- Optimized parallel processing to eliminate intermediate vector allocations
+- Improved memory efficiency by processing image rows in-place
+- Consolidated duplicate Operation enums between CLI and library
+
+### Fixed
+- Memory inefficiency in `unsharp_mask`, `enhance_edges`, and `clarity` functions
+- Unnecessary cloning when using `Arc` in `into_arc_dynamic()`
+- README.md overly promotional language and incorrect "zero dependencies" claim
+
+### Performance
+- Reduced memory usage by ~50% for large images through streaming pixel processing
+- Eliminated collection of all pixels into vectors before applying changes
+- Improved cache locality with row-based parallel processing
+
 ## [0.1.0] - 2025-08-03
 
 ### Added

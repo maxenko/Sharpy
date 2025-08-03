@@ -56,7 +56,7 @@ cargo install sharpy
 Or build from source:
 
 ```bash
-git clone https://github.com/yourusername/sharpy
+git clone https://github.com/maxenko/sharpy
 cd sharpy
 cargo build --release
 ```
