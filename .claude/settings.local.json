@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo bench:*)",
+      "Bash(cargo build:*)",
+      "Bash(./target/debug/sharpy:*)"
+    ],
+    "deny": []
+  }
+}
