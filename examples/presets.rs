@@ -8,13 +8,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let image = Image::load("tests/fixtures/lens.jpg")?;
     
     // Try different presets
-    let presets = [
-        ("subtle", |img: Image| SharpeningPresets::subtle(img).apply()),
-        ("moderate", |img: Image| SharpeningPresets::moderate(img).apply()),
-        ("strong", |img: Image| SharpeningPresets::strong(img).apply()),
-        ("portrait", |img: Image| SharpeningPresets::portrait(img).apply()),
-        ("landscape", |img: Image| SharpeningPresets::landscape(img).apply()),
-        ("edge_aware", |img: Image| SharpeningPresets::edge_aware(img).apply()),
+    let presets: &[(&str, fn(Image) -> sharpy::Result<Image>)] = &[
+        ("subtle", |img| SharpeningPresets::subtle(img).apply()),
+        ("moderate", |img| SharpeningPresets::moderate(img).apply()),
+        ("strong", |img| SharpeningPresets::strong(img).apply()),
+        ("portrait", |img| SharpeningPresets::portrait(img).apply()),
+        ("landscape", |img| SharpeningPresets::landscape(img).apply()),
+        ("edge_aware", |img| SharpeningPresets::edge_aware(img).apply()),
     ];
     
     for (name, preset_fn) in presets {

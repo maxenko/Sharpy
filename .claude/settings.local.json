@@ -8,7 +8,9 @@
       "Bash(cargo build:*)",
       "Bash(./target/debug/sharpy:*)",
       "Bash(rm:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "WebFetch(domain:crates.io)",
+      "Bash(cargo search:*)"
     ],
     "deny": []
   }
