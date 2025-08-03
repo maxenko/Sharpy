@@ -1,4 +1,4 @@
-use crate::{Image, Result};
+use crate::{Image, Result, Operation};
 use crate::utils::EdgeMethod;
 use crate::sharpening;
 
@@ -23,12 +23,6 @@ pub struct SharpeningBuilder {
     operations: Vec<Operation>,
 }
 
-enum Operation {
-    UnsharpMask { radius: f32, amount: f32, threshold: u8 },
-    HighPassSharpen { strength: f32 },
-    EnhanceEdges { strength: f32, method: EdgeMethod },
-    Clarity { strength: f32, radius: f32 },
-}
 
 impl SharpeningBuilder {
     pub(crate) fn new(image: Image) -> Self {
@@ -152,7 +146,7 @@ mod tests {
     use image::RgbImage;
     
     fn create_test_image() -> Image {
-        Image::from_rgb(RgbImage::new(100, 100))
+        Image::from_rgb(RgbImage::new(100, 100)).unwrap()
     }
     
     #[test]

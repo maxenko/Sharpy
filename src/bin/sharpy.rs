@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use sharpy::{Image, EdgeMethod, SharpeningPresets};
+use sharpy::{Image, EdgeMethod, SharpeningPresets, Operation};
 use anyhow::{Result, Context};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::{Path, PathBuf};
@@ -364,12 +364,6 @@ fn process_batch(cli: &Cli, pattern: &str, output_dir: &Path, suffix: &str, oper
     Ok(())
 }
 
-enum Operation {
-    Unsharp { radius: f32, amount: f32, threshold: u8 },
-    Highpass { strength: f32 },
-    Edges { strength: f32, method: EdgeMethod },
-    Clarity { strength: f32, radius: f32 },
-}
 
 fn parse_operations(operations: &[String]) -> Result<Vec<Operation>> {
     operations.iter()
@@ -385,7 +379,7 @@ fn parse_single_operation(op: &str) -> Result<Operation> {
             if parts.len() != 4 {
                 anyhow::bail!("Unsharp requires 3 parameters: unsharp:radius:amount:threshold");
             }
-            Ok(Operation::Unsharp {
+            Ok(Operation::UnsharpMask {
                 radius: parts[1].parse().context("Invalid radius")?,
                 amount: parts[2].parse().context("Invalid amount")?,
                 threshold: parts[3].parse().context("Invalid threshold")?,
@@ -395,7 +389,7 @@ fn parse_single_operation(op: &str) -> Result<Operation> {
             if parts.len() != 2 {
                 anyhow::bail!("Highpass requires 1 parameter: highpass:strength");
             }
-            Ok(Operation::Highpass {
+            Ok(Operation::HighPassSharpen {
                 strength: parts[1].parse().context("Invalid strength")?,
             })
         }
@@ -408,7 +402,7 @@ fn parse_single_operation(op: &str) -> Result<Operation> {
                 "prewitt" => EdgeMethod::Prewitt,
                 _ => anyhow::bail!("Unknown edge method: {}", parts[2]),
             };
-            Ok(Operation::Edges {
+            Ok(Operation::EnhanceEdges {
                 strength: parts[1].parse().context("Invalid strength")?,
                 method,
             })
@@ -442,13 +436,13 @@ fn process_single_with_operations(cli: &Cli, input: &Path, output: &Path, operat
     // Apply each operation in sequence
     for operation in operations {
         image = match operation {
-            Operation::Unsharp { radius, amount, threshold } => {
+            Operation::UnsharpMask { radius, amount, threshold } => {
                 image.unsharp_mask(*radius, *amount, *threshold)
             }
-            Operation::Highpass { strength } => {
+            Operation::HighPassSharpen { strength } => {
                 image.high_pass_sharpen(*strength)
             }
-            Operation::Edges { strength, method } => {
+            Operation::EnhanceEdges { strength, method } => {
                 image.enhance_edges(*strength, *method)
             }
             Operation::Clarity { strength, radius } => {

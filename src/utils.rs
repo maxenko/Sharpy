@@ -2,7 +2,7 @@ use image::{RgbImage, Rgb};
 use rayon::prelude::*;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EdgeMethod {
     Sobel,
     Prewitt,
