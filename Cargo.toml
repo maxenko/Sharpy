@@ -2,10 +2,10 @@
 name = "sharpy"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Max Enko <max@bigmail.one>"]
 description = "High-performance image sharpening library for Rust"
-repository = "https://github.com/yourusername/sharpy"
-license = "MIT OR Apache-2.0"
+repository = "https://github.com/maxenko/sharpy"
+license = "MIT"
 readme = "README.md"
 keywords = ["image", "sharpening", "image-processing", "graphics", "filter"]
 categories = ["multimedia::images", "multimedia::encoding"]
