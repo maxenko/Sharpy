@@ -10,7 +10,9 @@
       "Bash(rm:*)",
       "Bash(touch:*)",
       "WebFetch(domain:crates.io)",
-      "Bash(cargo search:*)"
+      "Bash(cargo search:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
