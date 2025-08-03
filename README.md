@@ -30,11 +30,11 @@ sharpy preset portrait.jpg portrait_enhanced.jpg -p portrait
 
 ## Features
 
-- 🚀 **Fast** - Parallel processing with Rayon
-- 🎯 **Multiple algorithms** - Unsharp mask, high-pass, edge enhancement, clarity
-- 🔧 **Flexible API** - Builder pattern for complex workflows
-- 📦 **Zero dependencies** - Only depends on `image` and `rayon`
-- 🖥️ **CLI included** - Full-featured command-line tool
+- **Performance-focused** - Parallel processing with Rayon
+- **Multiple algorithms** - Unsharp mask, high-pass, edge enhancement, clarity
+- **Flexible API** - Builder pattern for complex workflows
+- **Minimal dependencies** - Core functionality with carefully selected dependencies
+- **CLI included** - Full-featured command-line tool
 
 ## Installation
 
@@ -115,7 +115,7 @@ let result = SharpeningPresets::subtle(image).apply()?;
 // Portrait enhancement (avoids over-sharpening skin)
 let result = SharpeningPresets::portrait(image).apply()?;
 
-// Landscape enhancement (maximum detail)
+// Landscape enhancement (enhanced detail)
 let result = SharpeningPresets::landscape(image).apply()?;
 ```
 
@@ -224,7 +224,7 @@ sharpy preset photo.jpg enhanced.jpg -p moderate
 - `strong` - Heavy sharpening for soft images
 - `edge-aware` - Emphasizes edges while preserving smooth areas
 - `portrait` - Optimized for portraits (avoids over-sharpening skin)
-- `landscape` - Maximum detail extraction for landscapes
+- `landscape` - Enhanced detail extraction for landscapes
 
 ### Batch Processing
 
@@ -290,7 +290,7 @@ sharpy unsharp portrait.jpg enhanced.jpg -r 1.2 -a 0.7 -t 10
 #### Landscape Photography
 
 ```bash
-# Maximum detail for landscapes
+# Enhanced detail for landscapes
 sharpy preset landscape.jpg landscape_final.jpg -p landscape
 
 # Custom landscape workflow
@@ -318,13 +318,15 @@ Sharpy uses parallel processing for optimal performance:
 - Separable convolution for Gaussian blur
 - Parallel pixel processing with Rayon
 - Efficient memory usage with copy-on-write
-- Zero-copy operations where possible
+- Optimized memory operations
 
-Benchmark results (1024x1024 image):
+Benchmark results on typical hardware (1024x1024 image):
 - Unsharp mask: ~45ms
 - High-pass sharpen: ~25ms
 - Edge enhancement: ~35ms
 - Clarity: ~65ms
+
+*Performance may vary based on hardware and image characteristics.
 
 ## Algorithm Details
 
@@ -391,6 +393,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
-- Uses the excellent [image](https://github.com/image-rs/image) crate for image I/O
-- Parallel processing powered by [rayon](https://github.com/rayon-rs/rayon)
-- CLI built with [clap](https://github.com/clap-rs/clap)
+- Built with [image](https://github.com/image-rs/image) crate for image I/O
+- Parallel processing with [rayon](https://github.com/rayon-rs/rayon)
+- CLI interface using [clap](https://github.com/clap-rs/clap)
