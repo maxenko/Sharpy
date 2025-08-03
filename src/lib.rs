@@ -53,12 +53,18 @@ use std::path::Path;
 use rayon::prelude::*;
 use std::sync::atomic::{AtomicU32, Ordering};
 
+// Memory safety constants
+const MAX_IMAGE_PIXELS: usize = 100_000_000; // ~100 megapixels
+const MAX_IMAGE_DIMENSION: u32 = 65536; // Max 65k x 65k
+
 mod sharpening;
 mod utils;
 mod builder;
+mod operations;
 
 pub use utils::EdgeMethod;
 pub use builder::{SharpeningBuilder, SharpeningPresets};
+pub use operations::Operation;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ImageError {
@@ -123,7 +129,7 @@ impl ImageData {
 /// // Create from existing image data
 /// use image::RgbImage;
 /// let rgb_image = RgbImage::new(800, 600);
-/// let image = Image::from_rgb(rgb_image);
+/// let image = Image::from_rgb(rgb_image)?;
 /// # Ok(())
 /// # }
 /// ```
@@ -133,13 +139,30 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn from_dynamic(img: DynamicImage) -> Self {
+    pub fn from_dynamic(img: DynamicImage) -> Result<Self> {
+        Self::validate_dimensions(img.width(), img.height())?;
+        Ok(Self {
+            data: ImageData::Owned(img.to_rgb8()),
+        })
+    }
+    
+    pub fn from_rgb(img: RgbImage) -> Result<Self> {
+        let (width, height) = img.dimensions();
+        Self::validate_dimensions(width, height)?;
+        Ok(Self {
+            data: ImageData::Owned(img),
+        })
+    }
+    
+    /// Create from dynamic image without validation (for internal use)
+    fn from_dynamic_unchecked(img: DynamicImage) -> Self {
         Self {
             data: ImageData::Owned(img.to_rgb8()),
         }
     }
     
-    pub fn from_rgb(img: RgbImage) -> Self {
+    /// Create from RGB image without validation (for internal use)
+    fn from_rgb_unchecked(img: RgbImage) -> Self {
         Self {
             data: ImageData::Owned(img),
         }
@@ -147,38 +170,63 @@ impl Image {
     
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
         let img = image::open(path)?;
-        Ok(Self::from_dynamic(img))
+        Self::from_dynamic(img)
     }
     
-    pub fn from_arc_dynamic(arc_img: Arc<DynamicImage>) -> Self {
+    /// Validate image dimensions to prevent memory issues
+    fn validate_dimensions(width: u32, height: u32) -> Result<()> {
+        if width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION {
+            return Err(ImageError::InvalidDimensions { width, height });
+        }
+        
+        let total_pixels = width as usize * height as usize;
+        if total_pixels > MAX_IMAGE_PIXELS {
+            return Err(ImageError::InvalidDimensions { width, height });
+        }
+        
+        Ok(())
+    }
+    
+    pub fn from_arc_dynamic(arc_img: Arc<DynamicImage>) -> Result<Self> {
+        let (width, height) = (arc_img.width(), arc_img.height());
+        Self::validate_dimensions(width, height)?;
+        
         match Arc::try_unwrap(arc_img) {
-            Ok(img) => Self::from_dynamic(img),
-            Err(arc_img) => Self {
+            Ok(img) => Ok(Self::from_dynamic_unchecked(img)),
+            Err(arc_img) => Ok(Self {
                 data: ImageData::Shared(Arc::new(arc_img.to_rgb8())),
-            },
+            }),
         }
     }
     
-    pub fn from_arc_rgb(arc_img: Arc<RgbImage>) -> Self {
+    pub fn from_arc_rgb(arc_img: Arc<RgbImage>) -> Result<Self> {
+        let (width, height) = arc_img.dimensions();
+        Self::validate_dimensions(width, height)?;
+        
         match Arc::try_unwrap(arc_img) {
-            Ok(img) => Self::from_rgb(img),
-            Err(arc_img) => Self {
+            Ok(img) => Ok(Self::from_rgb_unchecked(img)),
+            Err(arc_img) => Ok(Self {
                 data: ImageData::Shared(arc_img),
-            },
+            }),
         }
     }
     
-    pub fn from_dynamic_ref(img: &DynamicImage) -> Self {
-        Self {
+    pub fn from_dynamic_ref(img: &DynamicImage) -> Result<Self> {
+        Self::validate_dimensions(img.width(), img.height())?;
+        Ok(Self {
             data: ImageData::Owned(img.to_rgb8()),
-        }
+        })
     }
     
     pub fn into_arc_dynamic(self) -> Arc<DynamicImage> {
         match self.data {
             ImageData::Owned(img) => Arc::new(DynamicImage::ImageRgb8(img)),
             ImageData::Shared(arc_img) => {
-                Arc::new(DynamicImage::ImageRgb8((*arc_img).clone()))
+                // Extract the owned image if possible to avoid cloning
+                match Arc::try_unwrap(arc_img) {
+                    Ok(img) => Arc::new(DynamicImage::ImageRgb8(img)),
+                    Err(arc_img) => Arc::new(DynamicImage::ImageRgb8((*arc_img).clone()))
+                }
             }
         }
     }
@@ -286,7 +334,7 @@ impl Image {
     /// # Example
     /// ```no_run
     /// # use sharpy::Image;
-    /// # let image = Image::from_rgb(image::RgbImage::new(100, 100));
+    /// # let image = Image::from_rgb(image::RgbImage::new(100, 100)).unwrap();
     /// let sharpened = image.sharpen()
     ///     .unsharp_mask(1.0, 1.0, 0)
     ///     .clarity(0.5, 2.0)
@@ -305,7 +353,7 @@ mod tests {
     #[test]
     fn test_image_creation() {
         let img = RgbImage::new(100, 100);
-        let sharpy_img = Image::from_rgb(img);
+        let sharpy_img = Image::from_rgb(img).unwrap();
         assert_eq!(sharpy_img.dimensions(), (100, 100));
     }
     
@@ -313,22 +361,22 @@ mod tests {
     fn test_parameter_validation() {
         // Test unsharp mask
         let img1 = RgbImage::new(100, 100);
-        let sharpy_img1 = Image::from_rgb(img1);
+        let sharpy_img1 = Image::from_rgb(img1).unwrap();
         assert!(sharpy_img1.unsharp_mask(-1.0, 1.0, 0).is_err());
         
         // Test high pass sharpen
         let img2 = RgbImage::new(100, 100);
-        let sharpy_img2 = Image::from_rgb(img2);
+        let sharpy_img2 = Image::from_rgb(img2).unwrap();
         assert!(sharpy_img2.high_pass_sharpen(-1.0).is_err());
         
         // Test enhance edges
         let img3 = RgbImage::new(100, 100);
-        let sharpy_img3 = Image::from_rgb(img3);
+        let sharpy_img3 = Image::from_rgb(img3).unwrap();
         assert!(sharpy_img3.enhance_edges(-1.0, EdgeMethod::Sobel).is_err());
         
         // Test clarity
         let img4 = RgbImage::new(100, 100);
-        let sharpy_img4 = Image::from_rgb(img4);
+        let sharpy_img4 = Image::from_rgb(img4).unwrap();
         assert!(sharpy_img4.clarity(-1.0, 1.0).is_err());
     }
 }
