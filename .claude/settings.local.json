@@ -6,7 +6,9 @@
       "Bash(cargo test:*)",
       "Bash(cargo bench:*)",
       "Bash(cargo build:*)",
-      "Bash(./target/debug/sharpy:*)"
+      "Bash(./target/debug/sharpy:*)",
+      "Bash(rm:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

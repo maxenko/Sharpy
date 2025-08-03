@@ -1,3 +1,52 @@
+//! # Sharpy
+//! 
+//! High-performance image sharpening library for Rust.
+//! 
+//! This library provides multiple sharpening algorithms optimized for performance
+//! with parallel processing support. It includes both a library API and a CLI tool.
+//! 
+//! ## Quick Start
+//! 
+//! ```no_run
+//! use sharpy::Image;
+//! 
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! // Load and sharpen an image
+//! let image = Image::load("photo.jpg")?;
+//! let sharpened = image.unsharp_mask(1.0, 1.0, 0)?;
+//! sharpened.save("photo_sharp.jpg")?;
+//! # Ok(())
+//! # }
+//! ```
+//! 
+//! ## Available Algorithms
+//! 
+//! - **Unsharp Mask** - Classic sharpening by subtracting a blurred version
+//! - **High-Pass** - Convolution-based sharpening using a high-pass kernel
+//! - **Edge Enhancement** - Detects and enhances edges using Sobel or Prewitt
+//! - **Clarity** - Local contrast enhancement for improved detail
+//! 
+//! ## Using the Builder Pattern
+//! 
+//! ```no_run
+//! use sharpy::{Image, EdgeMethod};
+//! 
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let result = Image::load("landscape.jpg")?
+//!     .sharpen()
+//!     .unsharp_mask(1.0, 1.2, 1)
+//!     .edge_enhance(0.5, EdgeMethod::Sobel)
+//!     .clarity(0.4, 3.0)
+//!     .apply()?;
+//! # Ok(())
+//! # }
+//! ```
+//! 
+//! ## Performance
+//! 
+//! All algorithms use parallel processing via Rayon for optimal performance.
+//! The library uses copy-on-write semantics to minimize memory allocations.
+
 use image::{DynamicImage, RgbImage};
 use std::sync::Arc;
 use std::path::Path;
@@ -57,6 +106,27 @@ impl ImageData {
     }
 }
 
+/// The main image type that provides sharpening operations.
+/// 
+/// This struct uses copy-on-write semantics internally to minimize memory
+/// allocations when cloning images.
+/// 
+/// # Examples
+/// 
+/// ```no_run
+/// use sharpy::Image;
+/// 
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// // Load from file
+/// let image = Image::load("photo.jpg")?;
+/// 
+/// // Create from existing image data
+/// use image::RgbImage;
+/// let rgb_image = RgbImage::new(800, 600);
+/// let image = Image::from_rgb(rgb_image);
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone)]
 pub struct Image {
     data: ImageData,
